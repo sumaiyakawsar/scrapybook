@@ -1,0 +1,29 @@
+.toolbar-right {
+    position: fixed;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    z-index: 100;
+}
+
+.toolbar-right button,
+.color-picker {
+    all: unset;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.541);
+    display: grid;
+    place-items: center;
+    font-size: 1.4rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+.color-picker {
+    padding: 0;
+    border: none;
+}
