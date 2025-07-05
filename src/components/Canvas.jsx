@@ -1,19 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useScrapbook } from "../contexts/ScrapbookContext";
-
-
-
+import { useDrawing } from "../hooks/useDrawing";
 import ToolbarLeft from "./ToolbarLeft";
 import ToolbarRight from "./ToolbarRight";
-import PageNav from "./PageNav";
-import "./Canvas.css";
+import PageNav from "./PageNav"; 
+import ToolbarBottom from "./ToolbarBottom";
 
 export default function Canvas() {
     const {
+        data,
+        setData,
         pages,
         currentPage,
         updateCurrentPage,
-        goToPage,
+        goToPage, addText,
         setPageDesign,
         currentPageIndex,
     } = useScrapbook();
@@ -22,23 +22,18 @@ export default function Canvas() {
     const [tool, setTool] = useState("none"); // pen | note | text | table
     const [color, setColor] = useState("#ff0000");
     const [thickness, setThickness] = useState(3);
+    const [selectedFontSize, setSelectedFontSize] = useState("16");
+    const [fontStyle, setFontStyle] = useState("normal");
 
-    // const [pageDesign, setPageDesign] = useState("dotted");
+    const {
+        canvasRef,
+        handlePointerDown,
+        handlePointerMove,
+        handlePointerUp, clearCanvas,
+    } = useDrawing({ color, thickness, tool });
 
-    // 🧠 Drawing
-    const canvasRef = useRef(null);
-    const ctxRef = useRef(null);
-    const [isDrawing, setIsDrawing] = useState(false);
-    // const [paths, setPaths] = useState([]); // Array of drawn paths
-    const [currentPath, setCurrentPath] = useState([]);
 
-    // ✏️ Notes / Tables
-    // const [elements, setElements] = useState([]);
 
-   
-
-    const paths = currentPage?.elements?.filter((el) => el.type === "draw") || [];
-    const elements = currentPage?.elements?.filter((el) => el.type !== "draw") || [];
     const pageDesign = currentPage?.design || "dotted";
 
     const handleToolAction = (action) => {
@@ -51,6 +46,10 @@ export default function Canvas() {
                 break;
             case "image":
                 alert("Image upload coming soon!");
+                break;
+            case "text":
+                setTool("text");
+                addText(selectedFontSize, color);
                 break;
             default:
                 break;
@@ -66,153 +65,9 @@ export default function Canvas() {
             pageDesign === "dotted" ? "ruled" : pageDesign === "ruled" ? "plain" : "dotted";
         setPageDesign(next);
     };
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        canvas.width = canvas.offsetWidth || 800;
-        canvas.height = canvas.offsetHeight || 600;
-
-        const ctx = canvas.getContext("2d");
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-        ctx.strokeStyle = color;
-        ctx.lineWidth = thickness;
-        ctxRef.current = ctx;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        paths.forEach((el) => {
-            if (el.type === "draw") drawPath(el, ctx);
-        });
-    }, [paths, color, thickness]);
-
-    // useEffect(() => {
-    //     const canvas = canvasRef.current;
-
-    //     // ✅ Bail out if canvas isn't ready
-    //     if (!canvas) return;
-
-    //     canvas.width = canvas.offsetWidth;
-    //     canvas.height = canvas.offsetHeight;
-
-    //     const ctx = canvas.getContext("2d");
-    //     ctx.lineCap = "round";
-    //     ctx.lineJoin = "round";
-    //     ctx.strokeStyle = color;
-    //     ctx.lineWidth = thickness;
-    //     ctxRef.current = ctx;
-
-    //     // Redraw all paths
-    //     // ctx.clearRect(0, 0, canvas.width, canvas.height);
-    //     // paths.forEach(p => drawPath(p, ctx));
-
-    //     if (currentPage?.elements) {
-    //         currentPage.elements.forEach((el) => {
-    //             if (el.type === "draw") {
-    //                 drawPath(ctx, el.path, el.color, el.thickness);
-    //             }
-    //         });
-    //     }
-    //     // }, [paths]);
-    // }, [currentPage]);
-
-    // useEffect(() => {
-    //     if (ctxRef.current) {
-    //         ctxRef.current.strokeStyle = color;
-    //         ctxRef.current.lineWidth = thickness;
-    //     }
-    // }, [color, thickness]);
-
-    // const drawPath = ({ points, color, thickness }, ctx = ctxRef.current) => {
-    //     if (!points.length) return;
-    //     ctx.strokeStyle = color;
-    //     ctx.lineWidth = thickness;
-    //     ctx.beginPath();
-    //     ctx.moveTo(points[0][0], points[0][1]);
-    //     for (let i = 1; i < points.length; i++) {
-    //         ctx.lineTo(points[i][0], points[i][1]);
-    //     }
-    //     ctx.stroke();
-    // };
-    // const drawPath = (ctx, path, strokeColor, lineWidth) => {
-    //     ctx.strokeStyle = strokeColor;
-    //     ctx.lineWidth = lineWidth;
-    //     ctx.beginPath();
-    //     for (let i = 0; i < path.length; i++) {
-    //         const [x, y] = path[i];
-    //         if (i === 0) {
-    //             ctx.moveTo(x, y);
-    //         } else {
-    //             ctx.lineTo(x, y);
-    //         }
-    //     }
-    //     ctx.stroke();
-    // };
-
-    const drawPath = ({ path, color, thickness }, ctx = ctxRef.current) => {
-        if (!path?.length) return;
-
-        ctx.strokeStyle = color;
-        ctx.lineWidth = thickness;
-        ctx.beginPath();
-        for (let i = 0; i < path.length; i++) {
-            const [x, y] = path[i];
-            if (i === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
-        }
-        // ctx.moveTo(path[0][0], path[0][1]);
-        // for (let i = 1; i < path.length; i++) {
-        //     ctx.lineTo(path[i][0], path[i][1]);
-        // }
-        ctx.stroke();
-    };
-    const handlePointerDown = (e) => {
-        if (tool !== "pen") return;
 
 
-        setIsDrawing(true);
 
-        const rect = canvasRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        ctxRef.current.beginPath();
-        ctxRef.current.moveTo(x, y);
-        setCurrentPath([[x, y]]);
-    };
-
-    const handlePointerMove = (e) => {
-        if (!isDrawing || tool !== "pen") return;
-
-        const rect = canvasRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        ctxRef.current.lineTo(x, y);
-        ctxRef.current.stroke();
-        setCurrentPath((prev) => [...prev, [x, y]]);
-    };
-
-
-    const handlePointerUp = () => {
-        setIsDrawing(false);
-        if (currentPath.length < 2) return;
-
-        const newPath = {
-            type: "draw",
-            path: currentPath,
-            color,
-            thickness,
-        };
-
-        updateCurrentPage({
-            elements: [...(currentPage.elements || []), newPath],
-        });
-
-        setCurrentPath([]);
-    };
 
     const handleDrag = (e, index) => {
         const el = e.currentTarget;
@@ -228,10 +83,10 @@ export default function Canvas() {
             document.removeEventListener("pointermove", move);
             document.removeEventListener("pointerup", up);
 
-            const updated = [...elements];
+            const updated = [...currentPage.elements];
             updated[index].x = parseInt(el.style.left);
             updated[index].y = parseInt(el.style.top);
-            setElements(updated);
+            updateCurrentPage({ elements: updated });
         };
 
         document.addEventListener("pointermove", move);
@@ -248,24 +103,35 @@ export default function Canvas() {
     const handleNextPage = () => {
         goToPage(currentPageIndex + 1);
     };
-    const clearCanvas = () => {
-        ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-        updateCurrentPage({ elements: (currentPage.elements || []).filter(el => el.type !== "draw") });
-    };
 
-    // if (!currentPage) return <div className="canvas">No pages yet!</div>;
+
+    if (!currentPage) return <div className="canvas">No pages yet!</div>;
 
     return (
         <>
-            <ToolbarLeft onAction={handleToolAction} clearCanvas={clearCanvas}
+            <ToolbarLeft
+                onAction={handleToolAction}
+                clearCanvas={clearCanvas}
             />
+
             <ToolbarRight
                 color={color}
-                thickness={thickness}
                 onColorChange={handleColorChange}
                 onDesignChange={handleDesignChange}
-                currentDesign={pageDesign} onThicknessChange={setThickness}
+                currentDesign={pageDesign}
             />
+
+            <ToolbarBottom
+                showThickness={tool === "pen"}
+                thickness={thickness}
+                onThicknessChange={setThickness}
+                showFontSize={tool === "text"}
+                selectedFontSize={selectedFontSize} // ✅ Pass current value!
+                onFontSizeChange={setSelectedFontSize}
+                fontStyle={tool === "text" ? fontStyle : undefined}
+                onFontStyleChange={setFontStyle}
+            />
+
             <PageNav onPrev={handlePrevPage} onNext={handleNextPage}
                 current={currentPageIndex + 1}
                 total={pages.length} />
@@ -274,30 +140,31 @@ export default function Canvas() {
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}>
+
                 <canvas ref={canvasRef} className="drawing-canvas" />
 
-
-                {elements.map((el, idx) => {
-                    // console.log(el.type)
+                {currentPage?.elements.map((el, idx) => {
                     if (el.type === "note") {
                         return (
                             <div
                                 key={idx}
                                 contentEditable
-                                className="note"
+                                className="sticky-note"
                                 style={{ top: el.y, left: el.x, position: "absolute" }}
                                 onPointerDown={(e) => handleDrag(e, idx)}
                                 suppressContentEditableWarning
                                 onBlur={(e) => {
-                                    const updated = [...elements];
+                                    const updated = [...currentPage.elements];
                                     updated[idx].content = e.target.innerText;
-                                    setElements(updated);
+                                    updateCurrentPage({ elements: updated });
                                 }}
                             >
                                 {el.content}
                             </div>
                         );
-                    } else if (el.type === "table") {
+                    }
+
+                    if (el.type === "table") {
                         return (
                             <table
                                 key={idx}
@@ -314,9 +181,9 @@ export default function Canvas() {
                                                     contentEditable
                                                     suppressContentEditableWarning
                                                     onBlur={(e) => {
-                                                        const updated = [...elements];
+                                                        const updated = [...currentPage.elements];
                                                         updated[idx].data[rIdx][cIdx] = e.target.innerText;
-                                                        setElements(updated);
+                                                        updateCurrentPage({ elements: updated });
                                                     }}
                                                 >
                                                     {cell}
@@ -328,38 +195,39 @@ export default function Canvas() {
                             </table>
                         );
                     }
+
+                    if (el.type === "text") {
+                        return (
+                            <div
+                                key={idx}
+                                contentEditable
+                                suppressContentEditableWarning
+                                style={{
+                                    position: "absolute",
+                                    left: el.x,
+                                    top: el.y,
+                                    background: "transparent",
+                                    fontSize: el.size || "16px",
+                                    color: el.color || "#000",
+                                    cursor: "move",
+                                }}
+                                onPointerDown={(e) => handleDrag(e, idx)}
+                                onBlur={(e) => {
+                                    const updated = [...currentPage.elements];
+                                    updated[idx].content = e.target.innerText;
+                                    updateCurrentPage({ elements: updated });
+                                }}
+                            >
+                                {el.content}
+                            </div>
+                        );
+                    }
+
+                    return null;
                 })}
 
 
 
-
-
-
-
-                {tool === "note" && (
-                    <div className="note" contentEditable style={{ top: "200px", left: "200px" }}>
-                        Write something...
-                    </div>
-                )}
-                {tool === "text" && (
-                    <div className="text-box" contentEditable style={{ top: "300px", left: "300px" }}>
-                        Editable text
-                    </div>
-                )}
-                {tool === "table" && (
-                    <table className="scrapbook-table" style={{ top: "400px", left: "300px" }}>
-                        <tbody>
-                            <tr>
-                                <td>Cell 1</td>
-                                <td>Cell 2</td>
-                            </tr>
-                            <tr>
-                                <td>Cell 3</td>
-                                <td>Cell 4</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                )}
             </div>
         </>
     );

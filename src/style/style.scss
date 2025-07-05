@@ -1,4 +1,4 @@
-@import "theme";
+@use "theme";
 
 body {
     background-color: var(--bg-color);
@@ -12,28 +12,283 @@ body {
         height: 100vh;
         font-family: sans-serif;
 
+        .minimal-toolbar {
+            height: 100vh;
+            width: 100dvw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--background);
+            color: var(--text-color);
+            transition:
+                background 0.3s ease,
+                color 0.3s ease;
+
+            &.dark {
+                --background: #1e1e1e;
+                --text-color: #f0f0f0;
+            }
+
+            &.light {
+                --background: #f8f9fa;
+                --text-color: #222;
+            }
+
+            .toolbar-inner {
+                text-align: center;
+                padding: 2rem;
+                border: 2px dashed #ccc;
+                border-radius: 12px;
+                background: var(--background);
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+
+                h1 {
+                    font-size: 2rem;
+                    margin-bottom: 0.5rem;
+                }
+                p {
+                    margin-bottom: 1.5rem;
+                    color: #777;
+                }
+
+                .btn__container {
+                    display: flex;
+                    justify-content: center;
+                    gap: 1rem;
+                    button {
+                        font-size: 1.2rem;
+                        padding: 0.5rem 2rem;
+                        background: #0077ff;
+                        color: white;
+                        border: none;
+                        cursor: pointer;
+                        border-radius: 8px;
+                        transition: transform 0.2s ease;
+
+                        &.bounce {
+                            animation: bounceIn 0.6s ease;
+                        }
+                    }
+                }
+            }
+
+            @keyframes bounceIn {
+                0% {
+                    transform: scale(0.5);
+                    opacity: 0;
+                }
+
+                60% {
+                    transform: scale(1.1);
+                    opacity: 1;
+                }
+
+                100% {
+                    transform: scale(1);
+                }
+            }
+        }
+
+        .toolbar-left {
+            position: fixed;
+            top: 50%;
+            left: 1rem;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.548);
+            border-radius: 28px;
+            padding: 1rem 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            button {
+                all: unset;
+                cursor: pointer;
+                font-size: 1.4rem;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                text-align: center;
+                display: grid;
+                place-items: center;
+                transition: background 0.2s ease;
+
+                &:hover {
+                    background: #f0f0f0;
+                }
+            }
+
+            hr {
+                width: 60%;
+                border: none;
+                border-top: 1px solid #ccc;
+            }
+        }
+
+        .toolbar-right {
+            position: fixed;
+            top: 50%;
+            right: 1rem;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            z-index: 100;
+
+            button,
+            .color-picker {
+                all: unset;
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.541);
+                display: grid;
+                place-items: center;
+                font-size: 1.4rem;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                cursor: pointer;
+            }
+            .color-picker {
+                padding: 0;
+                border: none;
+            }
+        }
+
+        .toolbar-bottom {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            background: var(--toolbar-bg, #fff);
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: flex;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            align-items: center;
+            user-select: none;
+            min-width: 140px;
+
+            .thickness-control,
+            .font-size-control,
+            .font-style-control {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                button {
+                    background: none;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    width: 28px;
+                    height: 28px;
+                    font-size: 14px;
+                    cursor: pointer;
+                    color: #333;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    padding: 0;
+                    transition:
+                        background 0.2s ease,
+                        border-color 0.2s ease;
+
+                    &:hover {
+                        background: #eee;
+                        border-color: #888;
+                    }
+                    &.active {
+                        background: #007bff;
+                        border-color: #007bff;
+                        color: white;
+                    }
+                }
+            }
+
+            .thickness-control {
+                span {
+                    width: 20px;
+                    text-align: center;
+                    font-weight: 600;
+                    font-size: 14px;
+                    user-select: none;
+                    color: #222;
+                }
+            }
+        }
+
+        .page-nav {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            padding: 8px;
+
+            button {
+                all: unset;
+                font-size: 1.6rem;
+                cursor: pointer;
+                display: grid;
+                place-items: center;
+
+                width: 25px;
+                height: 25px;
+                // background-color: var(--primary-color, #007bff);
+                border: 2px solid black;
+                transform: rotate(45deg);
+
+                cursor: pointer;
+                transition: background 0.3s ease;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+                border-radius: 8px;
+                color: white;
+                font-size: 24px;
+                padding: 0;
+                color: black;
+                svg {
+                    transform: rotate(-45deg); /* counter-rotate the icon */
+                }
+
+                &:hover {
+                    background-color: var(--primary-dark, #000000);
+                    color: white;
+                }
+            }
+
+            .page-number {
+                font-weight: 500;
+                font-size: 14px;
+                color: #333;
+                min-width: 50px;
+                text-align: center;
+            }
+        }
+
         .canvas {
             flex: 1;
             background: white;
             position: relative;
-            padding: 1rem;
+            // padding: 1rem;
             overflow: hidden;
-            width: 100%;
-            height: 100%;
+            width: 100dvw;
+            height: 100dvh;
             position: relative;
-            padding: 2rem;
-            // transition: background 0.3s ease;
-            &.dots {
-                background-image: radial-gradient(#aaa 0.5px, transparent 0.5px);
-                background-size: 20px 20px;
-            }
+            // border: 2px solid red;
             &--plain {
                 background-color: #fff;
             }
 
             &--dotted {
                 background-color: #fff;
-                background-image: radial-gradient(#999 0.8px, transparent 0.8px);
+                background-image: radial-gradient(#ccc 1px, transparent 1px);
                 background-size: 18px 18px;
                 background-repeat: repeat;
             }
@@ -43,13 +298,14 @@ body {
                 background-image: linear-gradient(#ccc 1px, transparent 1px);
                 background-size: 100% 24px;
             }
+            
             .drawing-canvas {
                 width: 100%;
                 height: 100%;
                 position: absolute;
                 inset: 0;
+                // border: 2px solid red;
                 touch-action: none;
-                /* for mobile drawing */
             }
 
             .sticky-note {
@@ -68,108 +324,32 @@ body {
                 outline: none;
             }
 
-            .draggable-table {
+            .scrapbook-table {
                 position: absolute;
+                border-collapse: collapse;
                 border: 2px solid #ddd;
+                font-family: inherit;
+                font-size: 0.95rem;
                 padding: 4px;
                 background: #fff;
                 border-radius: 8px;
                 box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.15);
                 cursor: move;
 
-                table {
-                    border-collapse: collapse;
-                    font-family: inherit;
-                    font-size: 0.95rem;
-                    td {
-                        border: 1px solid #ccc;
-                        padding: 6px 10px;
-                        min-width: 60px;
-                        text-align: left;
-                    }
+                td {
+                    border: 1px solid #ccc;
+                    padding: 6px 10px;
+                    min-width: 60px;
+                    text-align: left;
                 }
-            }
-
-            .drawing-toolbar {
-                position: fixed;
-                bottom: 1rem;
-                right: 1rem;
-                background: var(--toolbar-bg, #f4f4f4);
-                padding: 0.75rem;
-                border-radius: 12px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-                display: flex;
-                flex-direction: column;
-                gap: 1rem;
-                z-index: 100;
-
-                .group {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.5rem;
-
-                    select {
-                        border: 1px solid #ccc;
-                        border-radius: 4px;
-                        padding: 0.25rem 0.5rem;
-                    }
-                }
-            }
-        }
-
-        .toolbar {
-            width: 60px;
-            background: var(--toolbar-bg, #f4f4f4);
-            padding: 0.5rem 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-            border-radius: 29px;
-
-            button {
-                all: unset;
-                cursor: pointer;
-                font-size: 1.25rem;
-                padding: 0.5rem;
-                // width: 40px;
-                // height: 40px;
-                text-align: center;
-                border-radius: 6px;
-                transition: background 0.2s;
-                border-radius: 50%;
-
-                &:hover {
-                    background: #e0e0e0;
-                }
-
-                .icon {
-                    &.moon {
-                        color: red;
-                    }
-                    &.sun {
-                        color: orangered;
-                    }
-
-                    &.sticky {
-                        color: #afffa8;
-                    }
-                }
-            }
-
-            hr {
-                width: 70%;
-                border: none;
-                border-top: 1px solid #ccc;
-                margin: 0.5rem 0;
             }
         }
     }
 
     @media print {
-        .toolbar,
-        .draw-toolbar,
-        .sticker-selector {
+        .toolbar-right,
+        .toolbar-left,
+        .toolbar-bottom {
             display: none;
         }
     }

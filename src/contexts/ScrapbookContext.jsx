@@ -1,49 +1,33 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState } from "react";
 
 import { useLocalStorage } from "../utils/useLocalStorage";
 
 const ScrapbookContext = createContext();
 
 export function ScrapbookProvider({ children }) {
-    const [pages, setPages] = useState([]);
+    const [data, setData] = useLocalStorage("scrapbook", {
+        pages: [],
+        currentPageIndex: 0,
+    });
 
-    const [currentPageIndex, setCurrentPageIndex] = useState(0);
+    const pages = data.pages;
+    const currentPageIndex = data.currentPageIndex;
     const [history, setHistory] = useState([]);
 
     const [redoStack, setRedoStack] = useState([]);
-
-    // 
-    useEffect(() => {
-        const saved = JSON.parse(localStorage.getItem("scrapbook"));
-        if (saved?.pages) {
-            setPages(saved.pages);
-            setCurrentPageIndex(saved.currentPageIndex || 0);
-        } else {
-            // Default blank page
-            setPages([{ elements: [], design: "dotted" }]);
-        }
-    }, []);
-
-    useEffect(() => {
-        localStorage.setItem("scrapbook", JSON.stringify({ pages, currentPageIndex }));
-    }, [pages, currentPageIndex]);
-
-    const currentPage = pages[currentPageIndex];
-    // 
-
-
-
+    const currentPage = pages[currentPageIndex] || null;
 
     const updateCurrentPage = (updates) => {
         const updatedPage = { ...currentPage, ...updates };
-        const newPages = [...pages];
-        newPages[currentPageIndex] = updatedPage;
+        const updatedPages = [...pages];
+        updatedPages[currentPageIndex] = updatedPage;
 
         // For undo
         setHistory([...history, currentPage]);
         setRedoStack([]);
 
-        setPages(newPages);
+        setData({ ...data, pages: updatedPages });
+
     };
 
     const addPage = () => {
@@ -53,13 +37,18 @@ export function ScrapbookProvider({ children }) {
             design: "plain", // default
 
         };
-        setPages([...pages, newPage]);
-        setCurrentPageIndex(pages.length); // go to new page
+
+        setData({
+            ...data,
+            pages: [...pages, newPage],
+            currentPageIndex: pages.length,
+        });
     };
 
     const goToPage = (index) => {
         if (index >= 0 && index < pages.length) {
-            setCurrentPageIndex(index);
+            setData({ ...data, currentPageIndex: index });
+
         }
     };
 
@@ -69,6 +58,8 @@ export function ScrapbookProvider({ children }) {
 
 
     const addStickyNote = () => {
+
+        // 1. Create the new note object
         const newNote = {
             type: "note",
             x: 100 + Math.random() * 100,
@@ -76,12 +67,26 @@ export function ScrapbookProvider({ children }) {
             text: "New note",
         };
 
+        // 2. Build the updated page
         const updatedPage = {
-            ...pages[currentPageIndex],
-            elements: [...(pages[currentPageIndex].elements || []), newNote],
+            ...currentPage,
+            elements: [
+                ...(currentPage.elements || []),
+                newNote
+            ],
         };
 
-        updateCurrentPage(updatedPage);
+        // 3. Create a new pages array with that updated page
+        const updatedPages = [
+            ...data.pages.slice(0, currentPageIndex),
+            updatedPage,
+            ...data.pages.slice(currentPageIndex + 1)
+        ];
+
+        setData({
+            ...data,
+            pages: updatedPages,
+        });
     };
 
     const addTable = () => {
@@ -91,16 +96,45 @@ export function ScrapbookProvider({ children }) {
             y: 150,
             rows: 3,
             cols: 3,
+            data: [
+                ["", "", ""],
+                ["", "", ""],
+                ["", "", ""],
+            ],
+        };
+
+
+        const updatedPage = {
+            ...currentPage,
+            elements: [...(currentPage.elements || []), newTable],
+        };
+
+        const updatedPages = [...data.pages];
+        updatedPages[currentPageIndex] = updatedPage;
+
+        setData({ ...data, pages: updatedPages });
+    };
+
+    const addText = (fontSize = "16px", color = "#000000") => {
+        const newText = {
+            type: "text",
+            x: 120,
+            y: 120,
+            content: "Double-click to edit",
+            size: fontSize,
+            color: color,
         };
 
         const updatedPage = {
-            ...pages[currentPageIndex],
-            elements: [...(pages[currentPageIndex].elements || []), newTable],
+            ...currentPage,
+            elements: [...(currentPage.elements || []), newText],
         };
 
-        updateCurrentPage(updatedPage);
-    };
+        const updatedPages = [...data.pages];
+        updatedPages[currentPageIndex] = updatedPage;
 
+        setData({ ...data, pages: updatedPages });
+    };
 
     const undo = () => {
         if (history.length === 0) return;
@@ -122,26 +156,7 @@ export function ScrapbookProvider({ children }) {
         setHistory([...history, currentPage]);
     };
 
-    // const exportJSON = () => {
-    //     const data = JSON.stringify(currentPage);
-    //     const blob = new Blob([data], { type: "application/json" });
-    //     const url = URL.createObjectURL(blob);
-    //     const link = document.createElement("a");
-    //     link.href = url;
-    //     link.download = "scrapbook-page.json";
-    //     link.click();
-    // };
 
-    // const exportImage = () => {
-    //     const canvasElement = document.querySelector(".canvas");
-
-    //     html2canvas(canvasElement).then((canvas) => {
-    //         const link = document.createElement("a");
-    //         link.href = canvas.toDataURL("image/png");
-    //         link.download = "scrapbook.png";
-    //         link.click();
-    //     });
-    // };
 
     const printPage = () => {
         window.print();
@@ -153,6 +168,8 @@ export function ScrapbookProvider({ children }) {
 
         <ScrapbookContext.Provider
             value={{
+                data,
+                setData,
                 pages,
                 currentPage,
                 currentPageIndex,
@@ -164,7 +181,8 @@ export function ScrapbookProvider({ children }) {
                 redo,
                 addStickyNote,
                 addTable,
-                //    exportJSON, exportImage, printPage
+                addText,
+                printPage
             }}
         >
             {children}
