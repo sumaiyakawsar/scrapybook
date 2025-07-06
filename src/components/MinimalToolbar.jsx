@@ -3,7 +3,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { FaMoon } from "react-icons/fa";
 import { AiFillSun } from "react-icons/ai";
 import { MdNoteAdd } from "react-icons/md";
-
+import logo from "../assets/Scrapybook-icon.png"
 
 export default function MinimalToolbar() {
     const { addPage } = useScrapbook();
@@ -12,6 +12,7 @@ export default function MinimalToolbar() {
     return (
         <div className={`minimal-toolbar ${theme}`}>
             <div className="toolbar-inner">
+                <img src={logo} alt="logo" />
                 <h1>📔 Your Scrapbook is Empty</h1>
                 <p>Start adding creative pages to bring your memories to life!</p>
 

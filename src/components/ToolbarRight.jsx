@@ -20,7 +20,7 @@ export default function ToolbarRight({
             <input
                 type="color"
                 className="color-picker"
-                value={color}
+                value={color} 
                 onChange={(e) => onColorChange(e.target.value)}
             />
 

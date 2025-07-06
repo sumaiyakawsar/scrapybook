@@ -1,0 +1,29 @@
+.rich-text-wrapper {
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    resize: none;
+    z-index: 10;
+}
+
+.format-toolbar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+.format-toolbar button {
+    background: #eee;
+    border: none;
+    padding: 4px 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.format-toolbar button:hover {
+    background: #ddd;
+}
+
+.editor-box {
+    border: 1px solid #ddd;
+    padding: 6px;
+    background: white;
+}

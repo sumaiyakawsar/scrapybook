@@ -1,8 +1,8 @@
 import { useRef, useState, useEffect } from "react";
 import { useScrapbook } from "../contexts/ScrapbookContext";
 
-export function useDrawing({ color, thickness, tool }) {
-    const { currentPage, updateCurrentPage } = useScrapbook();
+export function useDrawing({ color, thickness, selectedTool }) {
+    const { currentPage, updateCurrentPage, setSelectedTool } = useScrapbook();
 
     // 🧠 Drawing
     const canvasRef = useRef(null);
@@ -50,9 +50,8 @@ export function useDrawing({ color, thickness, tool }) {
     };
 
     const handlePointerDown = (e) => {
-        if (tool !== "pen") return;
-
-        setIsDrawing(true);
+        if (selectedTool !== "pen") return; // ✅ Only check tool
+        setIsDrawing(true); // ✅ Begin drawing
 
         const rect = canvasRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -63,7 +62,7 @@ export function useDrawing({ color, thickness, tool }) {
     };
 
     const handlePointerMove = (e) => {
-        if (!isDrawing || tool !== "pen") return;
+        if (!isDrawing || selectedTool !== "pen") return;// 👈 prevent unwanted drawing
 
         const rect = canvasRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -74,7 +73,7 @@ export function useDrawing({ color, thickness, tool }) {
     };
 
     const handlePointerUp = () => {
-        if (!isDrawing || tool !== "pen") return;
+        if (selectedTool !== "pen") return;// 👈 prevent unwanted drawing
 
         setIsDrawing(false);
 
@@ -92,6 +91,8 @@ export function useDrawing({ color, thickness, tool }) {
         }
 
         setCurrentPath([]);
+
+
     };
 
 
@@ -101,7 +102,7 @@ export function useDrawing({ color, thickness, tool }) {
 
         const confirmed = window.confirm("Are you sure you want to clear everything from this page?");
         if (!confirmed) return;
-        
+
         // Clear the actual canvas drawing
         ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
@@ -116,17 +117,17 @@ export function useDrawing({ color, thickness, tool }) {
 
     // 💡 Auto-stop drawing if tool switches
     useEffect(() => {
-        if (tool !== "pen" && isDrawing) {
+        if (selectedTool !== "pen" && isDrawing) {
             setIsDrawing(false);
             setCurrentPath([]);
         }
-    }, [tool]);
+    }, [selectedTool]);
 
     return {
         canvasRef,
         handlePointerDown,
         handlePointerMove,
-        handlePointerUp, 
+        handlePointerUp,
         clearCanvas,
     };
 }

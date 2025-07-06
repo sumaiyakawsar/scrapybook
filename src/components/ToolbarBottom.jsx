@@ -9,7 +9,10 @@ export default function ToolbarBottom({
     selectedFontSize,
     onFontSizeChange,
     fontStyle,
-    onFontStyleChange,
+    onFontStyleChange, fontWeight,
+    onFontWeightChange,
+    textDecoration,
+    onTextDecorationChange,
 }) {
     if (!showThickness && !showFontSize && !fontStyle) return null;
 
@@ -40,26 +43,27 @@ export default function ToolbarBottom({
             {/* Font Style Control */}
             {fontStyle !== undefined && (
                 <div className="font-style-control">
+
                     <button
-                        className={fontStyle === "normal" ? "active" : ""}
-                        onClick={() => onFontStyleChange("normal")}
-                        title="Normal"
-                    >
-                        <TbLetterA size={18} />
-                    </button>
-                    <button
-                        className={fontStyle === "bold" ? "active" : ""}
-                        onClick={() => onFontStyleChange("bold")}
+                        className={fontWeight === "bold" ? "active" : ""}
+                        onClick={() => onFontWeightChange(fontWeight === "bold" ? "normal" : "bold")}
                         title="Bold"
                     >
                         <AiOutlineBold size={18} />
                     </button>
                     <button
                         className={fontStyle === "italic" ? "active" : ""}
-                        onClick={() => onFontStyleChange("italic")}
+                        onClick={() => onFontStyleChange(fontStyle === "italic" ? "normal" : "italic")}
                         title="Italic"
                     >
                         <AiOutlineItalic size={18} />
+                    </button>
+
+                    <button
+                        className={textDecoration === "underline" ? "active" : ""}
+                        onClick={() => onTextDecorationChange(textDecoration === "underline" ? "none" : "underline")}
+                    >
+                        <u>U</u>
                     </button>
                 </div>
             )}

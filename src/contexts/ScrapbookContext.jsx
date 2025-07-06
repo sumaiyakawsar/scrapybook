@@ -1,6 +1,7 @@
 import { createContext, useContext, useState } from "react";
 
 import { useLocalStorage } from "../utils/useLocalStorage";
+import { v4 as uuidv4 } from "uuid";
 
 const ScrapbookContext = createContext();
 
@@ -17,6 +18,11 @@ export function ScrapbookProvider({ children }) {
     const [redoStack, setRedoStack] = useState([]);
     const currentPage = pages[currentPageIndex] || null;
 
+    const [selectedTool, setSelectedTool] = useState("none");
+    const [textColor, setTextColor] = useState("#000000");
+    const [drawingColor, setDrawingColor] = useState("#000000");
+    const [selectedNoteId, setSelectedNoteId] = useState(null);
+
     const updateCurrentPage = (updates) => {
         const updatedPage = { ...currentPage, ...updates };
         const updatedPages = [...pages];
@@ -26,6 +32,7 @@ export function ScrapbookProvider({ children }) {
         setHistory([...history, currentPage]);
         setRedoStack([]);
 
+        // console.log("Saving data:", JSON.stringify({ ...data, pages: updatedPages }));
         setData({ ...data, pages: updatedPages });
 
     };
@@ -35,7 +42,6 @@ export function ScrapbookProvider({ children }) {
             id: `page-${Date.now()}`,
             elements: [],
             design: "plain", // default
-
         };
 
         setData({
@@ -61,10 +67,11 @@ export function ScrapbookProvider({ children }) {
 
         // 1. Create the new note object
         const newNote = {
+            id: uuidv4(),
             type: "note",
             x: 100 + Math.random() * 100,
             y: 100 + Math.random() * 100,
-            text: "New note",
+            content: "New note",
         };
 
         // 2. Build the updated page
@@ -77,11 +84,8 @@ export function ScrapbookProvider({ children }) {
         };
 
         // 3. Create a new pages array with that updated page
-        const updatedPages = [
-            ...data.pages.slice(0, currentPageIndex),
-            updatedPage,
-            ...data.pages.slice(currentPageIndex + 1)
-        ];
+        const updatedPages = [...pages];
+        updatedPages[currentPageIndex] = updatedPage;
 
         setData({
             ...data,
@@ -91,6 +95,7 @@ export function ScrapbookProvider({ children }) {
 
     const addTable = () => {
         const newTable = {
+            id: uuidv4(),
             type: "table",
             x: 150,
             y: 150,
@@ -115,14 +120,25 @@ export function ScrapbookProvider({ children }) {
         setData({ ...data, pages: updatedPages });
     };
 
-    const addText = (fontSize = "16px", color = "#000000") => {
+    const addText = (
+        fontSize = "16px",
+        color = "#000000",
+        fontStyle = "normal",
+        fontWeight = "normal",
+        textDecoration = "none"
+    ) => {
         const newText = {
+            id: uuidv4(),
             type: "text",
             x: 120,
             y: 120,
             content: "Double-click to edit",
             size: fontSize,
             color: color,
+            style: fontStyle,
+            weight: fontWeight,
+            decoration: textDecoration,            
+            rotate:0,
         };
 
         const updatedPage = {
@@ -138,22 +154,24 @@ export function ScrapbookProvider({ children }) {
 
     const undo = () => {
         if (history.length === 0) return;
-        const prev = history.pop();
+        const prev = history[history.length - 1];
+        const newHistory = history.slice(0, -1);
         const newPages = [...pages];
         newPages[currentPageIndex] = prev;
-        setPages(newPages);
-        setHistory([...history]);
+        setHistory(newHistory);
         setRedoStack([...redoStack, currentPage]);
+        setData({ ...data, pages: newPages });
     };
 
     const redo = () => {
         if (redoStack.length === 0) return;
-        const next = redoStack.pop();
+        const next = redoStack[redoStack.length - 1];
+        const newRedoStack = redoStack.slice(0, -1);
         const newPages = [...pages];
         newPages[currentPageIndex] = next;
-        setPages(newPages);
-        setRedoStack([...redoStack]);
+        setRedoStack(newRedoStack);
         setHistory([...history, currentPage]);
+        setData({ ...data, pages: newPages });
     };
 
 
@@ -182,6 +200,16 @@ export function ScrapbookProvider({ children }) {
                 addStickyNote,
                 addTable,
                 addText,
+
+                selectedTool,
+                setSelectedTool,
+                textColor,
+                setTextColor,
+                drawingColor,
+                setDrawingColor,
+                selectedNoteId,
+                setSelectedNoteId,
+
                 printPage
             }}
         >

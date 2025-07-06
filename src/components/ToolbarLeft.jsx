@@ -9,8 +9,18 @@ import { MdNoteAdd } from "react-icons/md";
 
 export default function ToolbarLeft({ onAction, clearCanvas }) {
 
-    const { addPage, addStickyNote, addTable, undo, redo, printPage } = useScrapbook();
+    const { addPage, addStickyNote, addTable, undo, redo, printPage, selectedTool, setSelectedTool } = useScrapbook();
 
+
+    const handleAddNote = () => {
+        setSelectedTool("none"); // 🛑 stop drawing
+        addStickyNote();
+    };
+
+    const handleAddTable = () => {
+        setSelectedTool("none"); // 🛑 stop drawing
+        addTable();
+    };
     return (
         <div className="toolbar-left">
             <button onClick={addPage} title="Add Page"><MdNoteAdd /></button>
@@ -26,16 +36,23 @@ export default function ToolbarLeft({ onAction, clearCanvas }) {
                 <IoIosPrint />
             </button>
             <hr />
-            <button onClick={() => onAction("pen")}>
+            <button onClick={() => setSelectedTool("pen")}>
                 <FaPencilAlt />
-
             </button>
-            <button onClick={addStickyNote}>
+
+
+
+
+            <button onClick={handleAddNote}>
                 <FaStickyNote className="icon sticky" />
             </button>
 
+
+
             <button onClick={() => onAction("text")}>T</button>
-            <button onClick={addTable}>
+
+
+            <button onClick={handleAddTable}>
                 <AiOutlineTable />
             </button>
 

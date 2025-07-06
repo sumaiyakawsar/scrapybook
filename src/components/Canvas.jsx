@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useScrapbook } from "../contexts/ScrapbookContext";
 import { useDrawing } from "../hooks/useDrawing";
+
 import ToolbarLeft from "./ToolbarLeft";
 import ToolbarRight from "./ToolbarRight";
-import PageNav from "./PageNav"; 
 import ToolbarBottom from "./ToolbarBottom";
+import PageNav from "./PageNav";
+import StickyNote from "./Elements/StickyNote";
+import TextBox from "./Elements/TextBox";
+import TableBox from "./Elements/TableBox";
 
 export default function Canvas() {
     const {
@@ -16,21 +20,30 @@ export default function Canvas() {
         goToPage, addText,
         setPageDesign,
         currentPageIndex,
+        selectedTool,
+        setSelectedTool,
+        textColor,
+        setTextColor,
+        drawingColor,
+        setDrawingColor,
+        selectedNoteId,
+        setSelectedNoteId,
     } = useScrapbook();
 
-
-    const [tool, setTool] = useState("none"); // pen | note | text | table
+ 
     const [color, setColor] = useState("#ff0000");
     const [thickness, setThickness] = useState(3);
     const [selectedFontSize, setSelectedFontSize] = useState("16");
     const [fontStyle, setFontStyle] = useState("normal");
+    const [fontWeight, setFontWeight] = useState("normal");
+    const [textDecoration, setTextDecoration] = useState("none");
 
     const {
         canvasRef,
         handlePointerDown,
         handlePointerMove,
         handlePointerUp, clearCanvas,
-    } = useDrawing({ color, thickness, tool });
+    } = useDrawing({ color, thickness, selectedTool });
 
 
 
@@ -39,17 +52,19 @@ export default function Canvas() {
     const handleToolAction = (action) => {
         switch (action) {
             case "fullscreen":
+                setSelectedTool("none"); // stop drawing
                 document.documentElement.requestFullscreen?.();
                 break;
             case "pen":
-                setTool("pen");
+                setSelectedTool("pen");
                 break;
             case "image":
+                setSelectedTool("none"); // stop drawing
                 alert("Image upload coming soon!");
                 break;
             case "text":
-                setTool("text");
-                addText(selectedFontSize, color);
+                setSelectedTool("text");
+                addText(selectedFontSize, color, fontStyle, fontWeight, textDecoration);
                 break;
             default:
                 break;
@@ -67,35 +82,6 @@ export default function Canvas() {
     };
 
 
-
-
-    const handleDrag = (e, index) => {
-        const el = e.currentTarget;
-        const offsetX = e.clientX - el.offsetLeft;
-        const offsetY = e.clientY - el.offsetTop;
-
-        const move = (ev) => {
-            el.style.left = `${ev.clientX - offsetX}px`;
-            el.style.top = `${ev.clientY - offsetY}px`;
-        };
-
-        const up = (ev) => {
-            document.removeEventListener("pointermove", move);
-            document.removeEventListener("pointerup", up);
-
-            const updated = [...currentPage.elements];
-            updated[index].x = parseInt(el.style.left);
-            updated[index].y = parseInt(el.style.top);
-            updateCurrentPage({ elements: updated });
-        };
-
-        document.addEventListener("pointermove", move);
-        document.addEventListener("pointerup", up);
-    };
-
-
-
-
     const handlePrevPage = () => {
         goToPage(currentPageIndex - 1);
     };
@@ -103,9 +89,6 @@ export default function Canvas() {
     const handleNextPage = () => {
         goToPage(currentPageIndex + 1);
     };
-
-
-    if (!currentPage) return <div className="canvas">No pages yet!</div>;
 
     return (
         <>
@@ -122,21 +105,25 @@ export default function Canvas() {
             />
 
             <ToolbarBottom
-                showThickness={tool === "pen"}
+                showThickness={selectedTool === "pen"}
                 thickness={thickness}
                 onThicknessChange={setThickness}
-                showFontSize={tool === "text"}
+                showFontSize={selectedTool === "text"}
                 selectedFontSize={selectedFontSize} // ✅ Pass current value!
                 onFontSizeChange={setSelectedFontSize}
-                fontStyle={tool === "text" ? fontStyle : undefined}
+                fontStyle={selectedTool === "text" ? fontStyle : undefined}
                 onFontStyleChange={setFontStyle}
+                fontWeight={fontWeight}
+                onFontWeightChange={setFontWeight}
+                textDecoration={textDecoration}
+                onTextDecorationChange={setTextDecoration}
             />
 
             <PageNav onPrev={handlePrevPage} onNext={handleNextPage}
                 current={currentPageIndex + 1}
                 total={pages.length} />
 
-            <div className={`canvas canvas--${pageDesign}`}
+            <div className={`canvas canvas--${pageDesign} ${selectedTool === "pen" ? "canvas--drawing" : ""}`}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}>
@@ -144,82 +131,41 @@ export default function Canvas() {
                 <canvas ref={canvasRef} className="drawing-canvas" />
 
                 {currentPage?.elements.map((el, idx) => {
+
                     if (el.type === "note") {
                         return (
-                            <div
-                                key={idx}
-                                contentEditable
-                                className="sticky-note"
-                                style={{ top: el.y, left: el.x, position: "absolute" }}
-                                onPointerDown={(e) => handleDrag(e, idx)}
-                                suppressContentEditableWarning
-                                onBlur={(e) => {
-                                    const updated = [...currentPage.elements];
-                                    updated[idx].content = e.target.innerText;
-                                    updateCurrentPage({ elements: updated });
-                                }}
-                            >
-                                {el.content}
-                            </div>
+                            <StickyNote
+                                key={el.id}
+                                el={el}
+                                currentPage={currentPage}
+                                updateCurrentPage={updateCurrentPage}
+                                selectedNoteId={selectedNoteId}
+                                setSelectedNoteId={setSelectedNoteId}
+                            />
                         );
                     }
 
                     if (el.type === "table") {
                         return (
-                            <table
-                                key={idx}
-                                className="scrapbook-table"
-                                style={{ top: el.y, left: el.x, position: "absolute" }}
-                                onPointerDown={(e) => handleDrag(e, idx)}
-                            >
-                                <tbody>
-                                    {el.data.map((row, rIdx) => (
-                                        <tr key={rIdx}>
-                                            {row.map((cell, cIdx) => (
-                                                <td
-                                                    key={cIdx}
-                                                    contentEditable
-                                                    suppressContentEditableWarning
-                                                    onBlur={(e) => {
-                                                        const updated = [...currentPage.elements];
-                                                        updated[idx].data[rIdx][cIdx] = e.target.innerText;
-                                                        updateCurrentPage({ elements: updated });
-                                                    }}
-                                                >
-                                                    {cell}
-                                                </td>
-                                            ))}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                            <TableBox
+                                key={el.id}
+                                el={el}
+                                currentPage={currentPage}
+                                updateCurrentPage={updateCurrentPage}
+                            />
                         );
                     }
 
                     if (el.type === "text") {
                         return (
-                            <div
-                                key={idx}
-                                contentEditable
-                                suppressContentEditableWarning
-                                style={{
-                                    position: "absolute",
-                                    left: el.x,
-                                    top: el.y,
-                                    background: "transparent",
-                                    fontSize: el.size || "16px",
-                                    color: el.color || "#000",
-                                    cursor: "move",
-                                }}
-                                onPointerDown={(e) => handleDrag(e, idx)}
-                                onBlur={(e) => {
-                                    const updated = [...currentPage.elements];
-                                    updated[idx].content = e.target.innerText;
-                                    updateCurrentPage({ elements: updated });
-                                }}
-                            >
-                                {el.content}
-                            </div>
+                            <TextBox
+                                key={el.id}
+                                el={el}
+                                currentPage={currentPage}
+                                updateCurrentPage={updateCurrentPage}
+                            />
+
+
                         );
                     }
 
